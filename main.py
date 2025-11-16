@@ -6,7 +6,7 @@ from training_visualization import plot_multiple_histories
 # TODO: Seed-based reconstruction?
 
 # Load data
-data_dir = r"D:\AdvancedConcepts2\data\cifar-10-batches-py"
+data_dir = r"data\cifar-10-batches-py"
 loader = DataLoader(data_dir)
 x, y = loader.load_all_data()
 
@@ -25,7 +25,7 @@ all_histories = {}
 for cfg in network_configs:
     print(f"\nTraining: {cfg['name']}")
     cae = ConvAutoencoder(input_shape=(32,32,3), version=cfg['version'])
-    history = cae.train(x_train, x_val, epochs=10, batch_size=128)
+    history = cae.train(x_train, x_val, epochs=100, batch_size=128)
     all_histories[cfg['name']] = history
     cae.evaluate(x_test)
     #cae.visualize_reconstructed_images(x_test)
