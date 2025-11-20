@@ -37,9 +37,7 @@ def main(cfg: DictConfig):
     with open(output_dir / "config.yaml", "w") as f:
         OmegaConf.save(cfg, f)
 
-    # --------------------------------------------------
-    # Load CIFAR-10
-    # --------------------------------------------------
+    # Loading CIFAR-10 dataset
     data_dir = cfg.data.data_dir
     loader = DataLoader(data_dir)
     x, y = loader.load_all_data()
