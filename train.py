@@ -3,7 +3,7 @@ import hydra
 from omegaconf import DictConfig, OmegaConf
 from pathlib import Path
 import json
-
+import matplotlib.pyplot as plt
 from data_loader import DataLoader
 from dataset import CIFAR10Dataset
 from autoencoder import ConvAutoencoder
@@ -13,9 +13,8 @@ import tensorflow as tf
 import os
 
 
-# Set random seeds for reproducibility
-# ---------------------------
-SEED = 45
+# Set random seeds
+SEED = 42
 random.seed(SEED)
 np.random.seed(SEED)
 tf.random.set_seed(SEED)
@@ -29,9 +28,6 @@ def main(cfg: DictConfig):
     print("\n=== Hydra Configuration ===")
     print(OmegaConf.to_yaml(cfg))
 
-    # --------------------------------------------------
-    # Create output directory
-    # --------------------------------------------------
     # Use Hydra runtime output dir or fallback to "./results"
     output_dir = Path(hydra.utils.get_original_cwd()) / "results" / cfg.model.name.replace(" ", "_")
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -52,17 +48,11 @@ def main(cfg: DictConfig):
     dataset.normalize()
     x_train, x_val, x_test = dataset.split()
 
-    # --------------------------------------------------
-    # Build autoencoder from Hydra architecture config
-    # --------------------------------------------------
     cae = ConvAutoencoder(
         input_shape=tuple(cfg.model.input_shape),
         architecture=cfg.model.architecture
     )
 
-    # --------------------------------------------------
-    # Train the model
-    # --------------------------------------------------
     history = cae.train(
         x_train,
         x_val,
@@ -70,17 +60,11 @@ def main(cfg: DictConfig):
         batch_size=cfg.training.batch_size,
     )
 
-    # --------------------------------------------------
-    # Save training loss history
-    # --------------------------------------------------
     history_path = output_dir / "history.json"
     with open(history_path, "w") as f:
         json.dump(history.history, f)
     print(f"Training history saved to: {history_path}")
 
-    # --------------------------------------------------
-    # Evaluate model on test set
-    # --------------------------------------------------
     test_loss = cae.evaluate(x_test)
     with open(output_dir / "test_loss.txt", "w") as f:
         f.write(f"{test_loss}\n")
@@ -91,9 +75,15 @@ def main(cfg: DictConfig):
     cae.model.save_weights(model_path)
     print(f"Model weights saved to: {model_path}")
 
+    recon_path = output_dir / "reconstructed.png"
+    cae.visualize_reconstructed_images(x_test, n=10)
+    plt.savefig(recon_path)
+    plt.close()
+    print(f"Saved reconstructed images to: {recon_path}")
+
     return history
 
-
+# python train.py -m model=<modelname>,<modelname>
 if __name__ == "__main__":
     main()
 
@@ -112,7 +102,7 @@ if __name__ == "__main__":
             save_path=results_root / "selected_models_loss.png"
         )
 
-        # Optional: rank the selected models
+        #ranked models
         #TrainingVisualizer.rank_losses_from_dirs(
         #    results_dirs,
         #    use_val_loss=True

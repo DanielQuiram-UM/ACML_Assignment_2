@@ -138,4 +138,4 @@ class ConvAutoencoder:
             plt.axis("off")
 
         plt.tight_layout()
-        plt.show(block=False)
+        plt.show()

@@ -10,7 +10,7 @@ class DataLoader:
 
         with open(batch_filename, 'rb') as f:
             batch = pickle.load(f, encoding='latin1')
-            data = batch['data']  # shape (N, 3072)
+            data = batch['data']
             labels = batch['labels']
             data = data.reshape((len(data), 3, 32, 32))
             data = np.transpose(data, (0, 2, 3, 1))

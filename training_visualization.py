@@ -18,50 +18,11 @@ class TrainingVisualizer:
         else:
             raise ValueError("Either history or history_path must be provided.")
 
-def plot_loss(self, title="Training and Validation Loss over Epochs", save_path=None):
-    """
-    Plot training and validation loss for a single network.
-    """
-    epochs = range(1, len(self.history['loss']) + 1)
-    plt.figure(figsize=(6,4))
-    plt.plot(epochs, self.history['loss'], label='Training Loss')
-    if 'val_loss' in self.history:
-        plt.plot(epochs, self.history['val_loss'], label='Validation Loss')
-    plt.title(title)
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss (MSE)')
-    plt.yscale('log')
-    plt.legend()
-    plt.grid(True)
-    plt.tight_layout()
-    if save_path:
-        plt.savefig(save_path)
-    plt.show(block=False)
-
-def plot_multiple_histories(histories_dict, title="Training and Validation Loss Comparison"):
-    """
-    Plot multiple training histories on the same figure for comparison.
-    histories_dict: dictionary { 'Network Name': keras_history_object }
-    """
-    plt.figure(figsize=(8, 5))
-    for name, history in histories_dict.items():
-        plt.plot(history.history['loss'], label=f'{name} - Train')
-        plt.plot(history.history['val_loss'], linestyle='--', label=f'{name} - Val')
-    plt.title(title)
-    plt.xlabel("Epoch")
-    plt.ylabel("Loss (MSE)")
-    plt.yscale('log')
-    plt.legend()
-    plt.grid(True, which='both')
-    plt.tight_layout()
-    plt.show()
-
-    @staticmethod
     def plot_multiple_from_dirs(results_dirs, title="Training and Validation Loss Comparison", save_path=None):
         """
         Plot multiple training histories from saved JSON results directories.
         """
-        plt.figure(figsize=(8,5))
+        plt.figure(figsize=(8, 5))
         for dir_path in results_dirs:
             dir_path = Path(dir_path)
             model_name = dir_path.name
@@ -115,7 +76,7 @@ def plot_multiple_histories(histories_dict, title="Training and Validation Loss 
 
             losses.append((model_name, final_loss))
 
-        # Sort by loss ascending (best first)
+        # Sort by loss ascending (best first rank)
         losses.sort(key=lambda x: x[1])
 
         print("\n=== Model Loss Ranking ===")
@@ -123,4 +84,43 @@ def plot_multiple_histories(histories_dict, title="Training and Validation Loss 
             print(f"{rank}. {model_name}: {loss:.6f}")
 
         return losses
+
+def plot_loss(self, title="Training and Validation Loss over Epochs", save_path=None):
+    """
+    Plot training and validation loss for a single network.
+    """
+    epochs = range(1, len(self.history['loss']) + 1)
+    plt.figure(figsize=(6,4))
+    plt.plot(epochs, self.history['loss'], label='Training Loss')
+    if 'val_loss' in self.history:
+        plt.plot(epochs, self.history['val_loss'], label='Validation Loss')
+    plt.title(title)
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss (MSE)')
+    plt.yscale('log')
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    if save_path:
+        plt.savefig(save_path)
+    plt.show(block=False)
+
+def plot_multiple_histories(histories_dict, title="Training and Validation Loss Comparison"):
+    """
+    Plot multiple training histories on the same figure for comparison.
+    histories_dict: dictionary { 'Network Name': keras_history_object }
+    """
+    plt.figure(figsize=(8, 5))
+    for name, history in histories_dict.items():
+        plt.plot(history.history['loss'], label=f'{name} - Train')
+        plt.plot(history.history['val_loss'], linestyle='--', label=f'{name} - Val')
+    plt.title(title)
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss (MSE)")
+    plt.yscale('log')
+    plt.legend()
+    plt.grid(True, which='both')
+    plt.tight_layout()
+    plt.show()
+
 
