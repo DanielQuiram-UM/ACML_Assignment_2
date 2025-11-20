@@ -1,0 +1,88 @@
+name: "Latent_8Channels_4-6-8"
+
+input_shape: [32, 32, 3]
+
+architecture:
+  encoder:
+    # First conv block
+    - type: Conv2D
+      filters: 4           # fewer channels → smaller latent space
+      kernel_size: [3, 3]
+      activation: relu
+      padding: same
+      save: x1
+
+    - type: MaxPool
+      pool_size: [2, 2]
+      padding: valid
+
+    # Second conv block
+    - type: Conv2D
+      filters: 6           # less channels
+      kernel_size: [3, 3]
+      activation: relu
+      padding: same
+      save: x2
+
+    - type: MaxPool
+      pool_size: [2, 2]
+      padding: valid
+
+    # Third conv block (smaller latent representation)
+    - type: Conv2D
+      filters: 8 # 4 less channels
+      kernel_size: [3, 3]
+      activation: relu
+      padding: same
+      save: x3
+
+    - type: MaxPool
+      pool_size: [2, 2]
+      padding: valid
+
+  decoder:
+    # First upsample + conv
+    - type: Conv2D
+      filters: 8
+      kernel_size: [3, 3]
+      activation: relu
+      padding: same
+
+    - type: UpSample
+      size: [2, 2]
+
+    - type: Concat
+      from_tensor: x3
+
+    # Second upsample + conv
+    - type: Conv2D
+      filters: 6
+      kernel_size: [3, 3]
+      activation: relu
+      padding: same
+
+    - type: UpSample
+      size: [2, 2]
+
+    - type: Concat
+      from_tensor: x2
+
+    # Third upsample + conv
+    - type: Conv2D
+      filters: 4
+      kernel_size: [3, 3]
+      activation: relu
+      padding: same
+
+    - type: UpSample
+      size: [2, 2]
+
+    - type: Concat
+      from_tensor: x1
+
+    # Output layer
+    - type: Conv2D
+      filters: 3
+      kernel_size: [3, 3]
+      activation: sigmoid
+      padding: same

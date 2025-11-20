@@ -1,0 +1,50 @@
+name: "few_channels"
+
+input_shape: [32, 32, 3]
+
+architecture:
+  encoder:
+    - type: Conv2D
+      filters: 4   # reduced from 8
+      kernel_size: [3, 3]
+      activation: relu
+      padding: same
+
+    - type: MaxPool
+      pool_size: [2, 2]
+      padding: valid
+
+    - type: Conv2D
+      filters: 6   # reduced from 12
+      kernel_size: [3, 3]
+      activation: relu
+      padding: same
+
+    - type: MaxPool
+      pool_size: [2, 2]
+      padding: valid
+
+  decoder:
+    - type: Conv2D
+      filters: 8   # reduced from 16
+      kernel_size: [3, 3]
+      activation: relu
+      padding: same
+
+    - type: UpSample
+      size: [2, 2]
+
+    - type: Conv2D
+      filters: 6   # reduced from 12
+      kernel_size: [3, 3]
+      activation: relu
+      padding: same
+
+    - type: UpSample
+      size: [2, 2]
+
+    - type: Conv2D
+      filters: 3
+      kernel_size: [3, 3]
+      activation: sigmoid
+      padding: same

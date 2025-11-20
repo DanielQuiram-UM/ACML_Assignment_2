@@ -38,7 +38,7 @@ for cfg in network_configs:
     y_train, y_val, y_test = (y_train_color, y_val_color, y_test_color) if cfg['name'] == 'RGB output' else \
                              (y_train_ycrcb, y_val_ycrcb, y_test_ycrcb)
 
-    history = cae.train(x_train_gray, x_val_gray, y_train=y_train, y_val=y_val, epochs=100, batch_size=128)
+    history = cae.train(x_train_gray, x_val_gray, y_train=y_train, y_val=y_val, epochs=10, batch_size=128)
     all_histories[cfg['name']] = history
     cae.evaluate(x_test_gray, y_test=y_test)
     #cae.visualize_reconstructed_images(x_test)

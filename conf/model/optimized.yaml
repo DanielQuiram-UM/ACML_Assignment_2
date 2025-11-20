@@ -1,0 +1,74 @@
+name: "Optimized Full Autoencoder"
+
+input_shape: [32, 32, 3]
+
+architecture:
+  encoder:
+    - type: Conv2D
+      filters: 16
+      kernel_size: [3, 3]
+      activation: relu
+      padding: same
+      save: x1
+
+    - type: Conv2D
+      filters: 32
+      kernel_size: [3, 3]
+      activation: relu
+      padding: same
+      save: x2
+
+    - type: MaxPool
+      pool_size: [2, 2]
+      padding: same
+
+    - type: Conv2D
+      filters: 64
+      kernel_size: [3, 3]
+      activation: relu
+      padding: same
+      save: x3
+
+    - type: MaxPool
+      pool_size: [2, 2]
+      padding: same
+
+  decoder:
+    - type: Conv2D
+      filters: 64
+      kernel_size: [3, 3]
+      activation: relu
+      padding: same
+
+    - type: UpSample
+      size: [2, 2]
+
+    - type: Concat
+      from_tensor: x3
+
+    - type: Conv2D
+      filters: 32
+      kernel_size: [3, 3]
+      activation: relu
+      padding: same
+
+    - type: UpSample
+      size: [2, 2]
+
+    - type: Concat
+      from_tensor: x2
+
+    - type: Conv2D
+      filters: 16
+      kernel_size: [3, 3]
+      activation: relu
+      padding: same
+
+    - type: Concat
+      from_tensor: x1
+
+    - type: Conv2D
+      filters: 3
+      kernel_size: [3, 3]
+      activation: sigmoid
+      padding: same

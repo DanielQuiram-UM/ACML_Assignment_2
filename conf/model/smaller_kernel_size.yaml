@@ -1,0 +1,50 @@
+name: "smaller_kernel_size"
+
+input_shape: [32, 32, 3]
+
+architecture:
+  encoder:
+    - type: Conv2D
+      filters: 8
+      kernel_size: [1, 1]     # changed
+      activation: relu
+      padding: same
+
+    - type: MaxPool
+      pool_size: [2, 2]
+      padding: valid
+
+    - type: Conv2D
+      filters: 12
+      kernel_size: [1, 1]     # changed
+      activation: relu
+      padding: same
+
+    - type: MaxPool
+      pool_size: [2, 2]
+      padding: valid
+
+  decoder:
+    - type: Conv2D
+      filters: 16
+      kernel_size: [1, 1]     # changed
+      activation: relu
+      padding: same
+
+    - type: UpSample
+      size: [2, 2]
+
+    - type: Conv2D
+      filters: 12
+      kernel_size: [1, 1]     # changed
+      activation: relu
+      padding: same
+
+    - type: UpSample
+      size: [2, 2]
+
+    - type: Conv2D
+      filters: 3
+      kernel_size: [1, 1]     # changed
+      activation: sigmoid
+      padding: same

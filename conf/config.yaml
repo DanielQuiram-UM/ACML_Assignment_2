@@ -1,0 +1,9 @@
+defaults:
+  - model: full   # default model config
+
+data:
+  data_dir: "D:/AdvancedConcepts2/data/cifar-10-batches-py"
+
+training:
+  epochs: 10
+  batch_size: 128

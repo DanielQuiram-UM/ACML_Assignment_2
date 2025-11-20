@@ -1,64 +1,108 @@
 import matplotlib.pyplot as plt
 from tensorflow.keras import layers, models
+import random
+import numpy as np
+import tensorflow as tf
 
+SEED = 42
+random.seed(SEED)
+np.random.seed(SEED)
+tf.random.set_seed(SEED)
 
 class ConvAutoencoder:
-    def __init__(self, input_shape=(32, 32, 3), version='full', skip_connection=False):
+    def __init__(self, input_shape=(32, 32, 3), version=None, skip_connection=False, architecture=None):
         """
-        version:
-            'full'         -> original 9-layer network
-            'fewer_layers' -> smaller network for testing
+        Either specify:
+        - version='full' or 'fewer_layers' (old-style hardcoded networks)
+        OR
+        - architecture=dict / OmegaConf (Hydra-configured network)
         """
         self.input_shape = input_shape
         self.version = version
         self.skip_connection = skip_connection
+        self.architecture = architecture
 
         self.model = self.build_model()
 
     def build_model(self):
-        input_img = layers.Input(shape=self.input_shape)
-        x = input_img
+        x_in = layers.Input(shape=self.input_shape)
+        x = x_in
 
-        if self.version == 'full':
-            # -----------------------------
-            # Full network
-            # -----------------------------
-            # Encoder
-            x1 = layers.Conv2D(8, (3, 3), activation='relu', padding='same')(x)
-            x = layers.MaxPooling2D((2, 2))(x1)
-            x2 = layers.Conv2D(12, (3, 3), activation='relu', padding='same')(x)
-            encoded = layers.MaxPooling2D((2, 2))(x2)
+        if self.architecture is not None:
+            # -----------------------
+            # Hydra-configured network
+            # -----------------------
+            skip_tensors = {}
+            for layer_cfg in self.architecture.get('encoder', []):
+                t = layer_cfg['type']
+                if t == 'Conv2D':
+                    x = layers.Conv2D(
+                        filters=layer_cfg['filters'],
+                        kernel_size=tuple(layer_cfg['kernel_size']),
+                        activation=layer_cfg['activation'],
+                        padding=layer_cfg['padding']
+                    )(x)
+                elif t == 'MaxPool':
+                    x = layers.MaxPooling2D(
+                        pool_size=tuple(layer_cfg['pool_size']),
+                        padding=layer_cfg['padding']
+                    )(x)
+                if 'save' in layer_cfg:
+                    skip_tensors[layer_cfg['save']] = x
+            encoded = x
 
-            # Decoder
-            x = layers.Conv2D(16, (3, 3), activation='relu', padding='same')(encoded)
-            x = layers.UpSampling2D((2, 2))(x)
-            if self.skip_connection:
-                x = layers.Concatenate()([x, x2])
-            x = layers.Conv2D(12, (3, 3), activation='relu', padding='same')(x)
-            x = layers.UpSampling2D((2, 2))(x)
-            if self.skip_connection:
-                x = layers.Concatenate()([x, x1])
-            decoded = layers.Conv2D(3, (3, 3), activation='sigmoid', padding='same')(x)
+            for layer_cfg in self.architecture.get('decoder', []):
+                t = layer_cfg['type']
+                if t == 'Conv2D':
+                    x = layers.Conv2D(
+                        filters=layer_cfg['filters'],
+                        kernel_size=tuple(layer_cfg['kernel_size']),
+                        activation=layer_cfg['activation'],
+                        padding=layer_cfg['padding']
+                    )(x)
+                elif t == 'UpSample':
+                    x = layers.UpSampling2D(size=tuple(layer_cfg['size']))(x)
+                elif t == 'Concat':
+                    x = layers.Concatenate()([x, skip_tensors[layer_cfg['from_tensor']]])
+            decoded = layers.Conv2D(3, (3,3), activation='sigmoid', padding='same')(x)
 
-        elif self.version == 'fewer_layers':
-            # -----------------------------
-            # Smaller network for testing
-            # -----------------------------
-            # Encoder
-            x1 = layers.Conv2D(8, (3, 3), activation='relu', padding='same')(x)
-            encoded = layers.MaxPooling2D((2, 2), padding='same')(x1)
+        elif self.version is not None:
+            # -----------------------
+            # Old hard-coded networks
+            # -----------------------
+            if self.version == 'full':
+                x1 = layers.Conv2D(8, (3,3), activation='relu', padding='same')(x)
+                x = layers.MaxPooling2D((2,2))(x1)
+                x2 = layers.Conv2D(12, (3,3), activation='relu', padding='same')(x)
+                encoded = layers.MaxPooling2D((2,2))(x2)
 
-            # Decoder
-            x = layers.Conv2D(12, (3, 3), activation='relu', padding='same')(encoded)
-            x = layers.UpSampling2D((2, 2))(x)
-            if self.skip_connection:
-                x = layers.Concatenate()([x, x1])
-            decoded = layers.Conv2D(3, (3, 3), activation='sigmoid', padding='same')(x)
+                x = layers.Conv2D(16, (3,3), activation='relu', padding='same')(encoded)
+                x = layers.UpSampling2D((2,2))(x)
+                if self.skip_connection:
+                    x = layers.Concatenate()([x, x2])
+                x = layers.Conv2D(12, (3,3), activation='relu', padding='same')(x)
+                x = layers.UpSampling2D((2,2))(x)
+                if self.skip_connection:
+                    x = layers.Concatenate()([x, x1])
+                decoded = layers.Conv2D(3, (3,3), activation='sigmoid', padding='same')(x)
+
+            elif self.version == 'fewer_layers':
+                x1 = layers.Conv2D(8, (3,3), activation='relu', padding='same')(x)
+                encoded = layers.MaxPooling2D((2,2), padding='same')(x1)
+
+                x = layers.Conv2D(12, (3,3), activation='relu', padding='same')(encoded)
+                x = layers.UpSampling2D((2,2))(x)
+                if self.skip_connection:
+                    x = layers.Concatenate()([x, x1])
+                decoded = layers.Conv2D(3, (3,3), activation='sigmoid', padding='same')(x)
+
+            else:
+                raise ValueError(f"Unknown version '{self.version}' specified.")
 
         else:
-            raise ValueError(f"Unknown version '{self.version}' specified.")
+            raise ValueError("Either 'version' or 'architecture' must be provided.")
 
-        model = models.Model(input_img, decoded)
+        model = models.Model(x_in, decoded)
         model.compile(optimizer='adam', loss='mse')
         model.summary()
         return model
